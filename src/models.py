@@ -174,6 +174,30 @@ class cnn2dNSRich(nn.Module):
         return self.net(torch.cat((u0, mu*self.rw@self.cw, pdeu),dim=1))
 
 
+class cnn2dwave(nn.Module):
+    def __init__(self, cmesh, mesh_size, datachannels=1, parameterchannels=2) -> None:
+        super().__init__()
+        self.net = nn.Sequential(
+            # input is current data, parameters, coarse data at next step
+            nn.Conv2d(datachannels + parameterchannels + datachannels, 24, 6, stride=2, padding=2),  # 50,200
+            nn.ReLU(),
+
+            nn.Conv2d(24, 96, 6, stride=2, padding=2),  # 25,100
+            nn.ReLU(),
+            cblock(96, 7, cmesh),
+            cblock(96, 7, cmesh),
+            cblock(96, 7, cmesh),
+            cblock(96, 7, cmesh),
+            nn.PixelShuffle(4),  # upscale by factor 4
+            nn.Conv2d(6, datachannels, 5, padding=2),
+        )
+        # assuming that parameters have 2 channels
+        self.cw = nn.Parameter(torch.randn(1, parameterchannels, 1, mesh_size[1]))
+        self.rw = nn.Parameter(torch.randn(1, parameterchannels, mesh_size[0], 1))
+
+    def forward(self, u0, mu, pdeu):
+        return self.net(torch.cat((u0, mu*self.rw@self.cw, pdeu), dim=1))
+
 
 from einops import rearrange
 from einops.layers.torch import Rearrange

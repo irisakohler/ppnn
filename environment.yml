@@ -2,5 +2,7 @@ pytorch
 numpy
 matplotlib
 tensorboard
+pip:
+  - einops
 
 deepxde # required by DeepONet only
