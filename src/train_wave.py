@@ -21,6 +21,7 @@ if __name__ == '__main__':
     modelsavepath = "/home/iris/ppnn/wave/model.pth"
     modelsavepath_end_of_training = "/home/iris/ppnn/wave/model_end_of_training.pth"
 
+    timestep_start = 0
 
     # copied from wavedata
     # fine mesh
@@ -49,11 +50,11 @@ if __name__ == '__main__':
     device = torch.device("cpu")  # todo
 
     # (num_trajectories, t_points, 1, x_points, y_points)
-    coarse_data_train = torch.load("/home/iris/ppnn/data/coarse_data_train.pt", map_location='cpu')
-    coarse_data_test = torch.load("/home/iris/ppnn/data/coarse_data_test.pt", map_location='cpu')
+    coarse_data_train = torch.load("/home/iris/ppnn/data/coarse_data_train.pt", map_location='cpu')[:, timestep_start:]
+    coarse_data_test = torch.load("/home/iris/ppnn/data/coarse_data_test.pt", map_location='cpu')[:, timestep_start:]
 
-    fine_data_train = torch.load("/home/iris/ppnn/data/fine_data_train.pt", map_location='cpu')
-    fine_data_test = torch.load("/home/iris/ppnn/data/fine_data_test.pt", map_location='cpu')
+    fine_data_train = torch.load("/home/iris/ppnn/data/fine_data_train.pt", map_location='cpu')[:, timestep_start:]
+    fine_data_test = torch.load("/home/iris/ppnn/data/fine_data_test.pt", map_location='cpu')[:, timestep_start:]
 
     # (num_trajectories, 2)
     source_pos_fine_train = torch.load("/home/iris/ppnn/data/source_pos_fine_train.pt", map_location='cpu')
