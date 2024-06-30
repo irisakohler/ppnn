@@ -264,7 +264,7 @@ def simulate_wave(L_x, dx, L_y, dy, L_t, dt, source_x, source_y, freq):
     U[:, :, 1] = u_n.copy()
 
     # Process loop (on time mesh)
-    for n in range(2, N_t):
+    for n in range(2, N_t+1):
 
         u_np1 = single_step(u_n=u_n, u_nm1=u_nm1, n=n, N_x=N_x, N_y=N_y,
                             source_x=source_x, source_y=source_y, source_freq=freq,
