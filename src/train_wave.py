@@ -239,7 +239,8 @@ if __name__ == '__main__':
         writer.add_scalar('loss', loshis / counter, i)
         scheduler.step(loshis / counter)
 
-        torch.save(model.state_dict(), modelsavepath_end_of_training)
+        if i % 100 == 0 or i == EPOCH:
+            torch.save(model.state_dict(), modelsavepath_end_of_training)
 
         if i % 100 == 0:
             print('loss: {0:4f}\t epoch:{1:d}'.format(loshis / counter, i))
