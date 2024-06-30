@@ -21,8 +21,6 @@ Copyright - © SACHA BINDER - 2021
 ############## MODULES IMPORTATION ###############
 import numpy as np
 import torch
-import matplotlib.pyplot as plt
-from src.utility import viz_tools
 
 
 # Def of the initial condition
