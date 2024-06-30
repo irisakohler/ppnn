@@ -19,6 +19,8 @@ if __name__ == '__main__':
 
     tensorboarddir = "/home/iris/ppnn/wave"
     modelsavepath = "/home/iris/ppnn/wave/model.pth"
+    modelsavepath_end_of_training = "/home/iris/ppnn/wave/model_end_of_training.pth"
+
 
     # copied from wavedata
     # fine mesh
@@ -236,6 +238,8 @@ if __name__ == '__main__':
 
         writer.add_scalar('loss', loshis / counter, i)
         scheduler.step(loshis / counter)
+
+        torch.save(model.state_dict(), modelsavepath_end_of_training)
 
         if i % 100 == 0:
             print('loss: {0:4f}\t epoch:{1:d}'.format(loshis / counter, i))
