@@ -53,7 +53,7 @@ def celer(x, y):
     return 1
 
 
-def single_step(u_n, u_nm1, n, N_x, N_y, source_x, source_y, source_freq, dx, dy, dt, c=1):
+def single_step(u_n, u_nm1, n, N_x, N_y, source_x, source_y, source_freq, source_amplitude, dx, dy, dt, c=1):
     """
 
     Args:
@@ -76,7 +76,7 @@ def single_step(u_n, u_nm1, n, N_x, N_y, source_x, source_y, source_freq, dx, dy
     Cx2 = (dt / dx) ** 2
     Cy2 = (dt / dy) ** 2
 
-    u_n[source_x, source_y] = np.sin(n * source_freq)
+    u_n[source_x, source_y] = source_amplitude * np.sin(n * source_freq)
 
     u_np1 = np.zeros((N_x + 1, N_y + 1), float)
 
@@ -143,7 +143,7 @@ def single_step(u_n, u_nm1, n, N_x, N_y, source_x, source_y, source_freq, dx, dy
     return u_np1
 
 
-def simulate_wave(L_x, dx, L_y, dy, L_t, dt, source_x, source_y, freq):
+def simulate_wave(L_x, dx, L_y, dy, L_t, dt, source_x, source_y, freq, source_amplitude=source_amplitude):
     # Spatial mesh - i indices
     # L_x = 5  # Range of the domain according to x [m]
     # dx = 0.05  # Infinitesimal distance in the x direction
@@ -197,7 +197,7 @@ def simulate_wave(L_x, dx, L_y, dy, L_t, dt, source_x, source_y, freq):
         for j in range(0, N_y + 1):
             V_init[i, j] = V(X[i], Y[j])
 
-    u_n[source_x, source_y] = np.sin(1 * freq)
+    u_n[source_x, source_y] = source_amplitude * np.sin(1 * freq)
 
     U[:, :, 0] = u_n.copy()
 
@@ -266,7 +266,7 @@ def simulate_wave(L_x, dx, L_y, dy, L_t, dt, source_x, source_y, freq):
     # Process loop (on time mesh)
     for n in range(2, N_t + 1):
         u_np1 = single_step(u_n=u_n, u_nm1=u_nm1, n=n, N_x=N_x, N_y=N_y,
-                            source_x=source_x, source_y=source_y, source_freq=freq,
+                            source_x=source_x, source_y=source_y, source_freq=freq, source_amplitude=source_amplitude,
                             dx=dx, dy=dy, dt=dt)
 
         u_nm1 = u_n.copy()
@@ -300,6 +300,8 @@ if __name__ == '__main__':
 
     freq = 6 * np.pi / 1000
 
+    source_amplitude = params.source_amplitude
+
     # wavelength: 3 lambda / 5 seconds = c = 1 => lambda = 5/3 = 1.66
     # A = 1  # amplitude of source
 
@@ -323,7 +325,7 @@ if __name__ == '__main__':
             print(i)
             # shape (x_points, y_points, t_points)
             U = simulate_wave(L_x=L_x, dx=dx, L_y=L_y, dy=dy, L_t=L_t, dt=dt,
-                              source_x=pos_x[i], source_y=pos_y[i], freq=freq)
+                              source_x=pos_x[i], source_y=pos_y[i], freq=freq, source_amplitude=source_amplitude)
             U = np.transpose(U, (2, 0, 1))  # (t_points, x_points, y_points)
             U = U[0::subsampling_step]
             U = np.expand_dims(U, axis=1)  # (t_points, 1, x_points, y_points)

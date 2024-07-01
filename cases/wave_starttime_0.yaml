@@ -23,6 +23,8 @@ subsampling_step: 10  # only take every 10th entry for time
 all_timesteps:  101  # actual number of timesteps used in training will be all_timesteps - timestep _start
 timestep_start: 0
 
+source_amplitude: 1
+
 num_train_trajectories: 40
 num_test_trajectories: 20
 
