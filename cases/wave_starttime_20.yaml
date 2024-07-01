@@ -1,0 +1,59 @@
+---
+device:         cuda:0
+
+
+# mesh, time
+finemeshsize:   [100,100]
+coarsemeshsize: [10,10]
+
+# fine mesh
+L_x: 5  # Range of the domain according to x [m]
+dx_fine: 0.05  # Infinitesimal distance in the x direction
+dx_coarse: 0.5
+
+L_y: 5  # Range of the domain according to y [m]
+dy_fine: 0.05  # Infinitesimal distance in the y direction
+dy_coarse: 0.5
+
+# Temporal mesh with CFL < 1 - n indices
+L_t: 5  # Duration of simulation [s]
+dt: 0.005 #0.1 * min(dx, dy)  # Infinitesimal time with CFL (Courant–Friedrichs–Lewy condition)
+subsampling_step: 10  # only take every 10th entry for time
+
+all_timesteps:  101  # actual number of timesteps used in training will be all_timesteps - timestep _start
+timestep_start: 20
+
+num_train_trajectories: 40
+num_test_trajectories: 20
+
+
+# data
+coarse_data_train: /home/iris/ppnn/data/coarse_data_train.pt
+coarse_data_test: /home/iris/ppnn/data/coarse_data_test.pt
+
+fine_data_train: /home/iris/ppnn/data/fine_data_train.pt
+fine_data_test: /home/iris/ppnn/data/fine_data_test.pt
+
+source_pos_fine_train: /home/iris/ppnn/data/source_pos_fine_train.pt
+source_pos_coarse_train: /home/iris/ppnn/data/source_pos_coarse_train.pt
+source_pos_fine_test: /home/iris/ppnn/data/source_pos_fine_test.pt
+source_pos_coarse_test: /home/iris/ppnn/data/source_pos_coarse_test.pt
+
+
+# network
+network: "cnn2dwave"
+model_cmesh_size: [25, 25]  # size of coarse mesh in model architecture (not the same as coarse mesh size of solver)
+
+# training
+epochs: 3200
+batchsize: 256
+lr: 1.e-3
+
+
+# path
+tensorboarddir: /home/iris/ppnn/wave
+modelsavepath:  /home/iris/ppnn/wave/model.pth
+modelsavepath_end_of_training: /home/iris/ppnn/wave/model_end_of_training.pth
+test_result_path: /home/iris/ppnn/wave/first_training_point_prediction.pt
+
+...

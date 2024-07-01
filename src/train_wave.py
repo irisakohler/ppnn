@@ -14,60 +14,62 @@ from src.wavedata import single_step
 
 
 if __name__ == '__main__':
-    # inputfile = sys.argv[1]
-    # params = SimpleNamespace(**yaml.load(open(inputfile), Loader=yaml.FullLoader))
+    inputfile = sys.argv[1]
+    params = SimpleNamespace(**yaml.load(open(inputfile), Loader=yaml.FullLoader))
 
-    tensorboarddir = "/home/iris/ppnn/wave"
-    modelsavepath = "/home/iris/ppnn/wave/model.pth"
-    modelsavepath_end_of_training = "/home/iris/ppnn/wave/model_end_of_training.pth"
+    tensorboarddir = params.tensorboarddir
+    modelsavepath = params.modelsavepath
+    modelsavepath_end_of_training = params.modelsavepath_end_of_training
 
-    timestep_start = 0
+    timestep_start = params.timestep_start
 
-    # copied from wavedata
     # fine mesh
-    L_x = 5  # Range of the domain according to x [m]
-    dx_fine = 0.05  # Infinitesimal distance in the x direction
-    dx_coarse = 0.5
+    L_x = params.L_x  # Range of the domain according to x [m]
+    dx_fine = params.dx_fine  # Infinitesimal distance in the x direction
+    dx_coarse = params.dx_coarse
 
-    L_y = 5  # Range of the domain according to y [m]
-    dy_fine = 0.05  # Infinitesimal distance in the y direction
-    dy_coarse = 0.5
+    L_y = params.L_y  # Range of the domain according to y [m]
+    dy_fine = params.dy_fine  # Infinitesimal distance in the y direction
+    dy_coarse = params.dy_coarse
 
     # Temporal mesh with CFL < 1 - n indices
-    L_t = 5  # Duration of simulation [s]
-    dt = 0.005#0.1 * min(dx, dy)  # Infinitesimal time with CFL (Courant–Friedrichs–Lewy condition)
-    subsampling_step = 10  # only take every 10th entry
+    L_t = params.L_t  # Duration of simulation [s]
+    dt = params.dt#0.005#0.1 * min(dx, dy)  # Infinitesimal time with CFL (Courant–Friedrichs–Lewy condition)
+    subsampling_step = params.subsampling_step  # only take every 10th entry
 
-    freq = 6 * np.pi / 1000  # N_t
+    freq = 6 * np.pi / 1000
 
-    epochs = 3200
-    batchsize = 256
-    lr = 1.e-3
-    network = "cnn2dwave"
+    epochs = params.epochs
+    batchsize = params.batchsize
+    lr = params.lr
+    network = params.network
 
     np.random.seed(12)
     torch.manual_seed(12)
-    device = torch.device("cpu")  # todo
+    device = torch.device(params.device)
 
     # (num_trajectories, t_points, 1, x_points, y_points)
-    coarse_data_train = torch.load("/home/iris/ppnn/data/coarse_data_train.pt", map_location='cpu')[:, timestep_start:]
-    coarse_data_test = torch.load("/home/iris/ppnn/data/coarse_data_test.pt", map_location='cpu')[:, timestep_start:]
+    coarse_data_train = torch.load(params.coarse_data_train, map_location='cpu')[:, timestep_start:]
+    coarse_data_test = torch.load(params.coarse_data_test, map_location='cpu')[:, timestep_start:]
 
-    fine_data_train = torch.load("/home/iris/ppnn/data/fine_data_train.pt", map_location='cpu')[:, timestep_start:]
-    fine_data_test = torch.load("/home/iris/ppnn/data/fine_data_test.pt", map_location='cpu')[:, timestep_start:]
+    fine_data_train = torch.load(params.fine_data_train, map_location='cpu')[:, timestep_start:]
+    fine_data_test = torch.load(params.fine_data_test, map_location='cpu')[:, timestep_start:]
 
     # (num_trajectories, 2)
-    source_pos_fine_train = torch.load("/home/iris/ppnn/data/source_pos_fine_train.pt", map_location='cpu')
-    source_pos_coarse_train = torch.load("/home/iris/ppnn/data/source_pos_coarse_train.pt", map_location='cpu')
-    source_pos_fine_test = torch.load("/home/iris/ppnn/data/source_pos_fine_test.pt", map_location='cpu')
-    source_pos_coarse_test = torch.load("/home/iris/ppnn/data/source_pos_coarse_test.pt", map_location='cpu')
+    source_pos_fine_train = torch.load(params.source_pos_fine_train, map_location='cpu')
+    source_pos_coarse_train = torch.load(params.source_pos_coarse_train, map_location='cpu')
+    source_pos_fine_test = torch.load(params.source_pos_fine_test, map_location='cpu')
+    source_pos_coarse_test = torch.load(params.source_pos_coarse_test, map_location='cpu')
 
-    feature_size = [fine_data_train.shape[3], fine_data_train.shape[4]]  # fine mesh size
+    feature_size = params.finemeshsize  # fine mesh size
+    assert feature_size == [fine_data_train.shape[3], fine_data_train.shape[4]]
 
-    timesteps = fine_data_train.shape[1]  # only every 10th timestep was sampled in the data generation
+    timesteps = params.all_timesteps - timestep_start
+    assert timesteps == fine_data_train.shape[1]
 
-    cmesh = [coarse_data_train.shape[3], coarse_data_train.shape[4]]  # coarsemeshsize
-    model_cmesh_size = [25, 25]  # size of coarse mesh in model architecture (not the same as coarse mesh size of solver)
+    cmesh = params.coarsemeshsize
+    assert cmesh == [coarse_data_train.shape[3], coarse_data_train.shape[4]]  # coarsemeshsize
+    model_cmesh_size = params.model_cmesh_size  # size of coarse mesh in model architecture (not the same as coarse mesh size of solver)
     # modelparams = [cmesh, feature_size]
 
     # enrich, datachannel = True, 4
@@ -243,8 +245,9 @@ if __name__ == '__main__':
         if i % 100 == 0 or i == EPOCH:
             torch.save(model.state_dict(), modelsavepath_end_of_training)
 
+        print('loss: {0:4f}\t epoch:{1:d}'.format(loshis / counter, i))
+
         if i % 100 == 0:
-            print('loss: {0:4f}\t epoch:{1:d}'.format(loshis / counter, i))
 
             model.eval()
             test_re = []
@@ -296,7 +299,7 @@ if __name__ == '__main__':
 
             model.train()
 
-            test_re = torch.cat(test_re, dim=0).cpu()
+            test_re = torch.cat(test_re, dim=0).cpu()  # (timesteps, 1, xpoints, ypoints)
 
             for testtime in [0, (timesteps - 1) // 4, (timesteps - 1) // 2, 3 * (timesteps - 1) // 4, -1]:
                 writer.add_figure('test result {}'.format(testtime),

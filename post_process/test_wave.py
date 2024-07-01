@@ -13,59 +13,63 @@ from src.wavedata import single_step
 
 if __name__ == '__main__':
 
-    # generate long time model prediction for first training trajectory
+    # generate long time (5T) model prediction for first training trajectory
 
-    tensorboarddir = "/home/iris/ppnn/wave"
-    modelsavepath = "/home/iris/ppnn/wave/model.pth"
-    modelsavepath_end_of_training = "/home/iris/ppnn/wave/model_end_of_training.pth"
-    normpath = "/home/iris/ppn/wave/"
-    result_save_path = "/home/iris/ppnn/wave/first_training_point_prediction.pt"
+    inputfile = sys.argv[1]
+    params = SimpleNamespace(**yaml.load(open(inputfile), Loader=yaml.FullLoader))
 
-    timestep_start = 0
+    tensorboarddir = params.tensorboarddir
+    modelsavepath = params.modelsavepath
+    modelsavepath_end_of_training = params.modelsavepath_end_of_training
 
-    # copied from wavedata
+    result_save_path = params.test_result_path
+
+    timestep_start = params.timestep_start
+
     # fine mesh
-    L_x = 5  # Range of the domain according to x [m]
-    dx_fine = 0.05  # Infinitesimal distance in the x direction
-    dx_coarse = 0.5
+    L_x = params.L_x  # Range of the domain according to x [m]
+    dx_fine = params.dx_fine  # Infinitesimal distance in the x direction
+    dx_coarse = params.dx_coarse
 
-    L_y = 5  # Range of the domain according to y [m]
-    dy_fine = 0.05  # Infinitesimal distance in the y direction
-    dy_coarse = 0.5
+    L_y = params.L_y  # Range of the domain according to y [m]
+    dy_fine = params.dy_fine  # Infinitesimal distance in the y direction
+    dy_coarse = params.dy_coarse
 
     # Temporal mesh with CFL < 1 - n indices
-    L_t = 5  # Duration of simulation [s]
-    dt = 0.005  # 0.1 * min(dx, dy)  # Infinitesimal time with CFL (Courant–Friedrichs–Lewy condition)
-    subsampling_step = 10  # only take every 10th entry
+    L_t = params.L_t  # Duration of simulation [s]
+    dt = params.dt#0.005#0.1 * min(dx, dy)  # Infinitesimal time with CFL (Courant–Friedrichs–Lewy condition)
+    subsampling_step = params.subsampling_step  # only take every 10th entry
 
-    freq = 6 * np.pi / 1000  # N_t
+    freq = 6 * np.pi / 1000
 
-    network = "cnn2dwave"
+    network = params.network
 
     np.random.seed(12)
     torch.manual_seed(12)
-    device = torch.device("cpu")  # todo
+    device = torch.device(params.device)
 
     # (num_trajectories, t_points, 1, x_points, y_points)
-    coarse_data_train = torch.load("/home/iris/ppnn/data/coarse_data_train.pt", map_location='cpu')[:, timestep_start:]
-    coarse_data_test = torch.load("/home/iris/ppnn/data/coarse_data_test.pt", map_location='cpu')[:, timestep_start:]
+    coarse_data_train = torch.load(params.coarse_data_train, map_location='cpu')[:, timestep_start:]
+    coarse_data_test = torch.load(params.coarse_data_test, map_location='cpu')[:, timestep_start:]
 
-    fine_data_train = torch.load("/home/iris/ppnn/data/fine_data_train.pt", map_location='cpu')[:, timestep_start:]
-    fine_data_test = torch.load("/home/iris/ppnn/data/fine_data_test.pt", map_location='cpu')[:, timestep_start:]
+    fine_data_train = torch.load(params.fine_data_train, map_location='cpu')[:, timestep_start:]
+    fine_data_test = torch.load(params.fine_data_test, map_location='cpu')[:, timestep_start:]
 
     # (num_trajectories, 2)
-    source_pos_fine_train = torch.load("/home/iris/ppnn/data/source_pos_fine_train.pt", map_location='cpu')
-    source_pos_coarse_train = torch.load("/home/iris/ppnn/data/source_pos_coarse_train.pt", map_location='cpu')
-    source_pos_fine_test = torch.load("/home/iris/ppnn/data/source_pos_fine_test.pt", map_location='cpu')
-    source_pos_coarse_test = torch.load("/home/iris/ppnn/data/source_pos_coarse_test.pt", map_location='cpu')
+    source_pos_fine_train = torch.load(params.source_pos_fine_train, map_location='cpu')
+    source_pos_coarse_train = torch.load(params.source_pos_coarse_train, map_location='cpu')
+    source_pos_fine_test = torch.load(params.source_pos_fine_test, map_location='cpu')
+    source_pos_coarse_test = torch.load(params.source_pos_coarse_test, map_location='cpu')
 
-    feature_size = [fine_data_train.shape[3], fine_data_train.shape[4]]  # fine mesh size
+    feature_size = params.finemeshsize  # fine mesh size
+    assert feature_size == [fine_data_train.shape[3], fine_data_train.shape[4]]
 
-    timesteps = fine_data_train.shape[1]  # only every 10th timestep was sampled in the data generation
+    timesteps = params.all_timesteps - timestep_start
+    assert timesteps == fine_data_train.shape[1]
 
-    cmesh = [coarse_data_train.shape[3], coarse_data_train.shape[4]]  # coarsemeshsize
-    model_cmesh_size = [25,
-                        25]  # size of coarse mesh in model architecture (not the same as coarse mesh size of solver)
+    cmesh = params.coarsemeshsize
+    assert cmesh == [coarse_data_train.shape[3], coarse_data_train.shape[4]]  # coarsemeshsize
+    model_cmesh_size = params.model_cmesh_size  # size of coarse mesh in model architecture (not the same as coarse mesh size of solver)
 
     datachannel = 1  # we only have amplitude of wave
     parameterchannel = 2  # x and y index of source positioning
@@ -81,14 +85,14 @@ if __name__ == '__main__':
     label = fine_data_train[0, 2:].to(torch.float)  # following trajectory from T=2
     source_pos_coarse_test_single_trajectory = source_pos_coarse_train[0]
 
-    inmean = torch.load(os.path.join(normpath, 'inmean.pt'), map_location=device)
-    instd = torch.load(os.path.join(normpath, 'instd.pt'), map_location=device)
-    outmean = torch.load(os.path.join(normpath, 'outmean.pt'), map_location=device)
-    outstd = torch.load(os.path.join(normpath, 'outstd.pt'), map_location=device)
-    parsmean = torch.load(os.path.join(normpath, 'parsmean.pt'), map_location=device)
-    parsstd = torch.load(os.path.join(normpath, 'parsstd.pt'), map_location=device)
-    pdemean = torch.load(os.path.join(normpath, 'pdemean.pt'), map_location=device)
-    pdestd = torch.load(os.path.join(normpath, 'pdestd.pt'), map_location=device)
+    inmean = torch.load(os.path.join(tensorboarddir, 'inmean.pt'), map_location=device)
+    instd = torch.load(os.path.join(tensorboarddir, 'instd.pt'), map_location=device)
+    outmean = torch.load(os.path.join(tensorboarddir, 'outmean.pt'), map_location=device)
+    outstd = torch.load(os.path.join(tensorboarddir, 'outstd.pt'), map_location=device)
+    parsmean = torch.load(os.path.join(tensorboarddir, 'parsmean.pt'), map_location=device)
+    parsstd = torch.load(os.path.join(tensorboarddir, 'parsstd.pt'), map_location=device)
+    pdemean = torch.load(os.path.join(tensorboarddir, 'pdemean.pt'), map_location=device)
+    pdestd = torch.load(os.path.join(tensorboarddir, 'pdestd.pt'), map_location=device)
 
     model = getattr(models, network)(*modelparams).to(device)
     model.load_state_dict(torch.load(modelsavepath_end_of_training, map_location=device))

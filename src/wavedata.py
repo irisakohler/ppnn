@@ -17,13 +17,17 @@ The numerical scheme is based on finite difference method. This program is also 
 Copyright - © SACHA BINDER - 2021
 """
 
-
 ############## MODULES IMPORTATION ###############
+import sys
+from types import SimpleNamespace
+import yaml
+
 import numpy as np
 import torch
 
-
 # Def of the initial condition
+
+
 def I(x, y):
     """
     two space variables depending function
@@ -140,7 +144,6 @@ def single_step(u_n, u_nm1, n, N_x, N_y, source_x, source_y, source_freq, dx, dy
 
 
 def simulate_wave(L_x, dx, L_y, dy, L_t, dt, source_x, source_y, freq):
-
     # Spatial mesh - i indices
     # L_x = 5  # Range of the domain according to x [m]
     # dx = 0.05  # Infinitesimal distance in the x direction
@@ -165,7 +168,6 @@ def simulate_wave(L_x, dx, L_y, dy, L_t, dt, source_x, source_y, freq):
 
     # Velocity array for calculation (finite elements)
     c = np.ones((N_x + 1, N_y + 1), float)
-
 
     ############## CALCULATION CONSTANTS ###############
     Cx2 = (dt / dx) ** 2
@@ -203,69 +205,66 @@ def simulate_wave(L_x, dx, L_y, dy, L_t, dt, source_x, source_y, freq):
     # without boundary cond
 
     u_np1[1:N_x, 1:N_y] = 2 * u_n[1:N_x, 1:N_y] - (u_n[1:N_x, 1:N_y] - 2 * dt * V_init[1:N_x, 1:N_y]) + Cx2 * (
-                0.5 * (q[1:N_x, 1:N_y] + q[2:N_x + 1, 1:N_y]) * (u_n[2:N_x + 1, 1:N_y] - u_n[1:N_x, 1:N_y]) - 0.5 * (
-                    q[0:N_x - 1, 1:N_y] + q[1:N_x, 1:N_y]) * (u_n[1:N_x, 1:N_y] - u_n[0:N_x - 1, 1:N_y])) + Cy2 * (
-                                      0.5 * (q[1:N_x, 1:N_y] + q[1:N_x, 2:N_y + 1]) * (
-                                          u_n[1:N_x, 2:N_y + 1] - u_n[1:N_x, 1:N_y]) - 0.5 * (
-                                                  q[1:N_x, 0:N_y - 1] + q[1:N_x, 1:N_y]) * (
-                                                  u_n[1:N_x, 1:N_y] - u_n[1:N_x, 0:N_y - 1]))
+            0.5 * (q[1:N_x, 1:N_y] + q[2:N_x + 1, 1:N_y]) * (u_n[2:N_x + 1, 1:N_y] - u_n[1:N_x, 1:N_y]) - 0.5 * (
+            q[0:N_x - 1, 1:N_y] + q[1:N_x, 1:N_y]) * (u_n[1:N_x, 1:N_y] - u_n[0:N_x - 1, 1:N_y])) + Cy2 * (
+                                  0.5 * (q[1:N_x, 1:N_y] + q[1:N_x, 2:N_y + 1]) * (
+                                  u_n[1:N_x, 2:N_y + 1] - u_n[1:N_x, 1:N_y]) - 0.5 * (
+                                          q[1:N_x, 0:N_y - 1] + q[1:N_x, 1:N_y]) * (
+                                          u_n[1:N_x, 1:N_y] - u_n[1:N_x, 0:N_y - 1]))
 
     # Nuemann bound cond
     i, j = 0, 0
     u_np1[i, j] = 2 * u_n[i, j] - (u_n[i, j] - 2 * dt * V_init[i, j]) + Cx2 * (q[i, j] + q[i + 1, j]) * (
-                u_n[i + 1, j] - u_n[i, j]) + Cy2 * (q[i, j] + q[i, j + 1]) * (u_n[i, j + 1] - u_n[i, j])
+            u_n[i + 1, j] - u_n[i, j]) + Cy2 * (q[i, j] + q[i, j + 1]) * (u_n[i, j + 1] - u_n[i, j])
 
     i, j = 0, N_y
     u_np1[i, j] = 2 * u_n[i, j] - (u_n[i, j] - 2 * dt * V_init[i, j]) + Cx2 * (q[i, j] + q[i + 1, j]) * (
-                u_n[i + 1, j] - u_n[i, j]) + Cy2 * (q[i, j] + q[i, j - 1]) * (u_n[i, j - 1] - u_n[i, j])
+            u_n[i + 1, j] - u_n[i, j]) + Cy2 * (q[i, j] + q[i, j - 1]) * (u_n[i, j - 1] - u_n[i, j])
 
     i, j = N_x, 0
     u_np1[i, j] = 2 * u_n[i, j] - (u_n[i, j] - 2 * dt * V_init[i, j]) + Cx2 * (q[i, j] + q[i - 1, j]) * (
-                u_n[i - 1, j] - u_n[i, j]) + Cy2 * (q[i, j] + q[i, j + 1]) * (u_n[i, j + 1] - u_n[i, j])
+            u_n[i - 1, j] - u_n[i, j]) + Cy2 * (q[i, j] + q[i, j + 1]) * (u_n[i, j + 1] - u_n[i, j])
 
     i, j = N_x, N_y
     u_np1[i, j] = 2 * u_n[i, j] - (u_n[i, j] - 2 * dt * V_init[i, j]) + Cx2 * (q[i, j] + q[i - 1, j]) * (
-                u_n[i - 1, j] - u_n[i, j]) + Cy2 * (q[i, j] + q[i, j - 1]) * (u_n[i, j - 1] - u_n[i, j])
+            u_n[i - 1, j] - u_n[i, j]) + Cy2 * (q[i, j] + q[i, j - 1]) * (u_n[i, j - 1] - u_n[i, j])
 
     i = 0
     u_np1[i, 1:N_y - 1] = 2 * u_n[i, 1:N_y - 1] - (u_n[i, 1:N_y - 1] - 2 * dt * V_init[i, 1:N_y - 1]) + Cx2 * (
-                q[i, 1:N_y - 1] + q[i + 1, 1:N_y - 1]) * (u_n[i + 1, 1:N_y - 1] - u_n[i, 1:N_y - 1]) + Cy2 * (
-                                      0.5 * (q[i, 1:N_y - 1] + q[i, 2:N_y]) * (
-                                          u_n[i, 2:N_y] - u_n[i, 1:N_y - 1]) - 0.5 * (
-                                                  q[i, 0:N_y - 2] + q[i, 1:N_y - 1]) * (
-                                                  u_n[i, 1:N_y - 1] - u_n[i, 0:N_y - 2]))
+            q[i, 1:N_y - 1] + q[i + 1, 1:N_y - 1]) * (u_n[i + 1, 1:N_y - 1] - u_n[i, 1:N_y - 1]) + Cy2 * (
+                                  0.5 * (q[i, 1:N_y - 1] + q[i, 2:N_y]) * (
+                                  u_n[i, 2:N_y] - u_n[i, 1:N_y - 1]) - 0.5 * (
+                                          q[i, 0:N_y - 2] + q[i, 1:N_y - 1]) * (
+                                          u_n[i, 1:N_y - 1] - u_n[i, 0:N_y - 2]))
 
     j = 0
     u_np1[1:N_x - 1, j] = 2 * u_n[1:N_x - 1, j] - (u_n[1:N_x - 1, j] - 2 * dt * V_init[1:N_x - 1, j]) + Cx2 * (
-                0.5 * (q[1:N_x - 1, j] + q[2:N_x, j]) * (u_n[2:N_x, j] - u_n[1:N_x - 1, j]) - 0.5 * (
-                    q[0:N_x - 2, j] + q[1:N_x - 1, j]) * (u_n[1:N_x - 1, j] - u_n[0:N_x - 2, j])) + Cy2 * (
-                                      q[1:N_x - 1, j] + q[1:N_x - 1, j + 1]) * (
-                                      u_n[1:N_x - 1, j + 1] - u_n[1:N_x - 1, j])
+            0.5 * (q[1:N_x - 1, j] + q[2:N_x, j]) * (u_n[2:N_x, j] - u_n[1:N_x - 1, j]) - 0.5 * (
+            q[0:N_x - 2, j] + q[1:N_x - 1, j]) * (u_n[1:N_x - 1, j] - u_n[0:N_x - 2, j])) + Cy2 * (
+                                  q[1:N_x - 1, j] + q[1:N_x - 1, j + 1]) * (
+                                  u_n[1:N_x - 1, j + 1] - u_n[1:N_x - 1, j])
 
     i = N_x
     u_np1[i, 1:N_y - 1] = 2 * u_n[i, 1:N_y - 1] - (u_n[i, 1:N_y - 1] - 2 * dt * V_init[i, 1:N_y - 1]) + Cx2 * (
-                q[i, 1:N_y - 1] + q[i - 1, 1:N_y - 1]) * (u_n[i - 1, 1:N_y - 1] - u_n[i, 1:N_y - 1]) + Cy2 * (
-                                      0.5 * (q[i, 1:N_y - 1] + q[i, 2:N_y]) * (
-                                          u_n[i, 2:N_y] - u_n[i, 1:N_y - 1]) - 0.5 * (
-                                                  q[i, 0:N_y - 2] + q[i, 1:N_y - 1]) * (
-                                                  u_n[i, 1:N_y - 1] - u_n[i, 0:N_y - 2]))
+            q[i, 1:N_y - 1] + q[i - 1, 1:N_y - 1]) * (u_n[i - 1, 1:N_y - 1] - u_n[i, 1:N_y - 1]) + Cy2 * (
+                                  0.5 * (q[i, 1:N_y - 1] + q[i, 2:N_y]) * (
+                                  u_n[i, 2:N_y] - u_n[i, 1:N_y - 1]) - 0.5 * (
+                                          q[i, 0:N_y - 2] + q[i, 1:N_y - 1]) * (
+                                          u_n[i, 1:N_y - 1] - u_n[i, 0:N_y - 2]))
 
     j = N_y
     u_np1[1:N_x - 1, j] = 2 * u_n[1:N_x - 1, j] - (u_n[1:N_x - 1, j] - 2 * dt * V_init[1:N_x - 1, j]) + Cx2 * (
-                0.5 * (q[1:N_x - 1, j] + q[2:N_x, j]) * (u_n[2:N_x, j] - u_n[1:N_x - 1, j]) - 0.5 * (
-                    q[0:N_x - 2, j] + q[1:N_x - 1, j]) * (u_n[1:N_x - 1, j] - u_n[0:N_x - 2, j])) + Cy2 * (
-                                      q[1:N_x - 1, j] + q[1:N_x - 1, j - 1]) * (
-                                      u_n[1:N_x - 1, j - 1] - u_n[1:N_x - 1, j])
-
-
+            0.5 * (q[1:N_x - 1, j] + q[2:N_x, j]) * (u_n[2:N_x, j] - u_n[1:N_x - 1, j]) - 0.5 * (
+            q[0:N_x - 2, j] + q[1:N_x - 1, j]) * (u_n[1:N_x - 1, j] - u_n[0:N_x - 2, j])) + Cy2 * (
+                                  q[1:N_x - 1, j] + q[1:N_x - 1, j - 1]) * (
+                                  u_n[1:N_x - 1, j - 1] - u_n[1:N_x - 1, j])
 
     u_nm1 = u_n.copy()
     u_n = u_np1.copy()
     U[:, :, 1] = u_n.copy()
 
     # Process loop (on time mesh)
-    for n in range(2, N_t+1):
-
+    for n in range(2, N_t + 1):
         u_np1 = single_step(u_n=u_n, u_nm1=u_nm1, n=n, N_x=N_x, N_y=N_y,
                             source_x=source_x, source_y=source_y, source_freq=freq,
                             dx=dx, dy=dy, dt=dt)
@@ -279,24 +278,28 @@ def simulate_wave(L_x, dx, L_y, dy, L_t, dt, source_x, source_y, freq):
 
 if __name__ == '__main__':
 
-    num_train_trajectories = 40
-    num_test_trajectories = 20
+    inputfile = sys.argv[1]
+    params = SimpleNamespace(**yaml.load(open(inputfile), Loader=yaml.FullLoader))
+
+    num_train_trajectories = params.num_train_trajectories
+    num_test_trajectories = params.num_test_trajectories
 
     # fine mesh
-    L_x = 5  # Range of the domain according to x [m]
-    dx_fine = 0.05  # Infinitesimal distance in the x direction
-    dx_coarse = 0.5
+    L_x = params.L_x  # Range of the domain according to x [m]
+    dx_fine = params.dx_fine  # Infinitesimal distance in the x direction
+    dx_coarse = params.dx_coarse
 
-    L_y = 5  # Range of the domain according to y [m]
-    dy_fine = 0.05  # Infinitesimal distance in the y direction
-    dy_coarse = 0.5
+    L_y = params.L_y  # Range of the domain according to y [m]
+    dy_fine = params.dy_fine  # Infinitesimal distance in the y direction
+    dy_coarse = params.dy_coarse
 
     # Temporal mesh with CFL < 1 - n indices
-    L_t = 5  # Duration of simulation [s]
-    dt = 0.005#0.1 * min(dx, dy)  # Infinitesimal time with CFL (Courant–Friedrichs–Lewy condition)
-    subsampling_step = 10  # only take every 10th entry
+    L_t = params.L_t  # Duration of simulation [s]
+    dt = params.dt  # 0.005#0.1 * min(dx, dy)  # Infinitesimal time with CFL (Courant–Friedrichs–Lewy condition)
+    subsampling_step = params.subsampling_step  # only take every 10th entry
 
-    freq = 6 * np.pi / 1000  # N_t
+    freq = 6 * np.pi / 1000
+
     # wavelength: 3 lambda / 5 seconds = c = 1 => lambda = 5/3 = 1.66
     # A = 1  # amplitude of source
 
@@ -311,8 +314,10 @@ if __name__ == '__main__':
     pos_x_coarse = (pos_x_fine * (dx_fine / dx_coarse)).astype(int)
     pos_y_coarse = (pos_y_fine * (dy_fine / dy_coarse)).astype(int)
 
-    for dx, dy, pos_x, pos_y, name in [(dx_fine, dy_fine, pos_x_fine, pos_y_fine, "fine"),
-                                       (dx_coarse, dy_coarse, pos_x_coarse, pos_y_coarse, "coarse")]:
+    for dx, dy, pos_x, pos_y, train_path, test_path in [(dx_fine, dy_fine, pos_x_fine, pos_y_fine,
+                                                         params.fine_data_train, params.fine_data_test),
+                                                        (dx_coarse, dy_coarse, pos_x_coarse, pos_y_coarse,
+                                                         params.coarse_data_train, params.coarse_data_test)]:
         data = []
         for i in range(num_train_trajectories + num_test_trajectories):
             print(i)
@@ -327,18 +332,18 @@ if __name__ == '__main__':
         print(data.shape)  # (num_trajectories, t_points, 1, x_points, y_points)
         data_train = data[:num_train_trajectories]
         data_test = data[num_train_trajectories:]
-        torch.save(data_train, f"/home/iris/ppnn/data/{name}_data_train.pt")
-        torch.save(data_test, f"/home/iris/ppnn/data/{name}_data_test.pt")
+        torch.save(data_train, train_path)
+        torch.save(data_test, test_path)
 
     torch.save(torch.stack((torch.tensor(pos_x_fine[:num_train_trajectories]),
                             torch.tensor(pos_y_fine[:num_train_trajectories])), dim=1),
-               "/home/iris/ppnn/data/source_pos_fine_train.pt")
+               params.source_pos_fine_train)
     torch.save(torch.stack((torch.tensor(pos_x_coarse[:num_train_trajectories]),
                             torch.tensor(pos_y_coarse[:num_train_trajectories])), dim=1),
-               "/home/iris/ppnn/data/source_pos_coarse_train.pt")
+               params.source_pos_coarse_train)
     torch.save(torch.stack((torch.tensor(pos_x_fine[num_train_trajectories:]),
                             torch.tensor(pos_y_fine[num_train_trajectories:])), dim=1),
-               "/home/iris/ppnn/data/source_pos_fine_test.pt")
+               params.source_pos_fine_test)
     torch.save(torch.stack((torch.tensor(pos_x_coarse[num_train_trajectories:]),
                             torch.tensor(pos_y_coarse[num_train_trajectories:])), dim=1),
-               "/home/iris/ppnn/data/source_pos_coarse_test.pt")
+               params.source_pos_coarse_test)
