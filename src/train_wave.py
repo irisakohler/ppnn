@@ -144,10 +144,10 @@ if __name__ == '__main__':
 
     def add_plot(p, l=None):  #
         fig, ax = plt.subplots(2, 1, figsize=(5, 5))
-        p0 = ax[0].pcolormesh(p, clim=(l.min(), l.max()), cmap='coolwarm')
+        p0 = ax[0].pcolormesh(p, clim=(-1 * source_amplitude, source_amplitude), cmap='coolwarm')
         fig.colorbar(p0, ax=ax[0])
         if l is not None:
-            p2 = ax[1].pcolormesh(l, clim=(l.min(), l.max()), cmap='coolwarm')
+            p2 = ax[1].pcolormesh(l, clim=(-1 * source_amplitude, source_amplitude), cmap='coolwarm')
             fig.colorbar(p2, ax=ax[1])
         fig.tight_layout()
         return fig
