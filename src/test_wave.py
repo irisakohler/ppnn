@@ -41,6 +41,7 @@ if __name__ == '__main__':
     subsampling_step = params.subsampling_step  # only take every 10th entry
 
     freq = 6 * np.pi / 1000
+    source_amplitude = params.source_amplitude
 
     network = params.network
 
@@ -119,6 +120,7 @@ if __name__ == '__main__':
                                 N_x=cmesh[0] - 1, N_y=cmesh[1] - 1,  # function works with N_x+1
                                 source_x=source_pos_coarse_test_single_trajectory[0],
                                 source_y=source_pos_coarse_test_single_trajectory[1], source_freq=freq,
+                                source_amplitude=source_amplitude,
                                 dx=dx_coarse, dy=dy_coarse, dt=dt)
 
             u_nm1 = u_n.copy()
