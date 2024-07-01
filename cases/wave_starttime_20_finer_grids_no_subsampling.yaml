@@ -18,7 +18,7 @@ dy_coarse: 0.1
 # Temporal mesh with CFL < 1 - n indices
 L_t: 5  # Duration of simulation [s]
 dt: 0.005 #0.1 * min(dx, dy)  # Infinitesimal time with CFL (Courant–Friedrichs–Lewy condition)
-subsampling_step: 10  # only take every 10th entry for time
+subsampling_step: 1  # no subsampling
 
 all_timesteps:  101  # actual number of timesteps used in training will be all_timesteps - timestep _start
 timestep_start: 20
