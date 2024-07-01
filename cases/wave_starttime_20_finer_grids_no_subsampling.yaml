@@ -20,8 +20,8 @@ L_t: 5  # Duration of simulation [s]
 dt: 0.005 #0.1 * min(dx, dy)  # Infinitesimal time with CFL (Courant–Friedrichs–Lewy condition)
 subsampling_step: 1  # no subsampling
 
-all_timesteps:  101  # actual number of timesteps used in training will be all_timesteps - timestep _start
-timestep_start: 20
+all_timesteps:  1001  # actual number of timesteps used in training will be all_timesteps - timestep _start
+timestep_start: 200
 
 source_amplitude: 1
 
@@ -30,16 +30,16 @@ num_test_trajectories: 20
 
 
 # data
-coarse_data_train: /home/iris/ppnn/data/coarse_data_50_50_train.pt
-coarse_data_test: /home/iris/ppnn/data/coarse_data_50_50_test.pt
+coarse_data_train: /home/iris/ppnn/data/coarse_data_50_50_no_subsampling_train.pt
+coarse_data_test: /home/iris/ppnn/data/coarse_data_50_50_no_subsampling_test.pt
 
-fine_data_train: /home/iris/ppnn/data/fine_data_train.pt
-fine_data_test: /home/iris/ppnn/data/fine_data_test.pt
+fine_data_train: /home/iris/ppnn/data/fine_data_no_subsampling_train.pt
+fine_data_test: /home/iris/ppnn/data/fine_data_no_subsampling_test.pt
 
-source_pos_fine_train: /home/iris/ppnn/data/source_pos_fine_train.pt
-source_pos_coarse_train: /home/iris/ppnn/data/source_pos_coarse_50_50_train.pt
-source_pos_fine_test: /home/iris/ppnn/data/source_pos_fine_test.pt
-source_pos_coarse_test: /home/iris/ppnn/data/source_pos_coarse_50_50_test.pt
+source_pos_fine_train: /home/iris/ppnn/data/source_pos_fine_no_subsampling_train.pt
+source_pos_coarse_train: /home/iris/ppnn/data/source_pos_coarse_50_50_no_subsampling_train.pt
+source_pos_fine_test: /home/iris/ppnn/data/source_pos_fine_no_subsampling_test.pt
+source_pos_coarse_test: /home/iris/ppnn/data/source_pos_coarse_50_50_no_subsampling_test.pt
 
 
 # network
@@ -53,9 +53,9 @@ lr: 1.e-3
 
 
 # path
-tensorboarddir: /home/iris/ppnn/wave_finer_grids
-modelsavepath:  /home/iris/ppnn/wave_finer_grids/model.pth
-modelsavepath_end_of_training: /home/iris/ppnn/wave_finer_grids/model_end_of_training.pth
-test_result_path: /home/iris/ppnn/wave_finer_grids/first_training_point_prediction.pt
+tensorboarddir: /home/iris/ppnn/wave_finer_grids_no_subsampling
+modelsavepath:  /home/iris/ppnn/wave_finer_grids_no_subsampling/model.pth
+modelsavepath_end_of_training: /home/iris/ppnn/wave_finer_grids_no_subsampling/model_end_of_training.pth
+test_result_path: /home/iris/ppnn/wave_finer_grids_no_subsampling/first_training_point_prediction.pt
 
 ...
