@@ -143,7 +143,7 @@ def single_step(u_n, u_nm1, n, N_x, N_y, source_x, source_y, source_freq, source
     return u_np1
 
 
-def simulate_wave(L_x, dx, L_y, dy, L_t, dt, source_x, source_y, freq, source_amplitude=source_amplitude):
+def simulate_wave(L_x, dx, L_y, dy, L_t, dt, source_x, source_y, freq, source_amplitude):
     # Spatial mesh - i indices
     # L_x = 5  # Range of the domain according to x [m]
     # dx = 0.05  # Infinitesimal distance in the x direction
